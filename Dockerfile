@@ -57,6 +57,7 @@ RUN mkdir -p $ZEPPELIN_HOME \
 
 
 # my WorkDir
+RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN mkdir /work
 WORKDIR /work
 RUN mkdir /work/python
