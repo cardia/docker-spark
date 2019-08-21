@@ -1,7 +1,7 @@
-FROM ubuntu:16.10
+FROM ubuntu:18.04
 
-ARG ZEPPELIN_VERSION="0.7.2"
-ARG SPARK_VERSION="2.2.0"
+ARG ZEPPELIN_VERSION="0.8.1"
+ARG SPARK_VERSION="2.3.3"
 ARG HADOOP_VERSION="2.7"
 
 LABEL maintainer "mirkoprescha"
@@ -12,14 +12,19 @@ LABEL hadoop.version=${HADOOP_VERSION}
 # Install Java and some tools
 RUN apt-get -y update &&\
     apt-get -y install curl less &&\
-    apt-get install -y default-jdk &&\
-    apt-get -y install vim
+    apt-get -y install vim &&\
+    apt-get -y install openjdk-8-jdk;
 
+RUN apt-get -y install python3 &&\
+    apt-get -y install python3-pip
+
+RUN pip3 install awscli
+RUN pip3 install pyspark
 
 ##########################################
 # SPARK
 ##########################################
-ARG SPARK_ARCHIVE=http://d3kbcqa49mib13.cloudfront.net/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz
+ARG SPARK_ARCHIVE=http://mirror.apache-kr.org/spark/spark-2.3.3/spark-2.3.3-bin-hadoop2.7.tgz
 RUN mkdir /usr/local/spark &&\
     mkdir /tmp/spark-events    # log-events for spark history server
 ENV SPARK_HOME /usr/local/spark
@@ -35,7 +40,7 @@ COPY spark-defaults.conf ${SPARK_HOME}/conf/
 # Zeppelin
 ##########################################
 RUN mkdir /usr/zeppelin &&\
-    curl -s http://mirror.softaculous.com/apache/zeppelin/zeppelin-${ZEPPELIN_VERSION}/zeppelin-${ZEPPELIN_VERSION}-bin-all.tgz | tar -xz -C /usr/zeppelin
+    curl -s http://mirror.apache-kr.org/zeppelin/zeppelin-0.8.1/zeppelin-0.8.1-bin-all.tgz | tar -xz -C /usr/zeppelin
 
 RUN echo '{ "allow_root": true }' > /root/.bowerrc
 
@@ -51,11 +56,11 @@ RUN mkdir -p $ZEPPELIN_HOME \
   && mkdir -p $ZEPPELIN_HOME/run
 
 
-
 # my WorkDir
 RUN mkdir /work
 WORKDIR /work
-
+RUN mkdir /work/python
+VOLUME /work/python
 
 ENTRYPOINT  /usr/local/spark/sbin/start-history-server.sh; $ZEPPELIN_HOME/bin/zeppelin-daemon.sh start  && bash
 
